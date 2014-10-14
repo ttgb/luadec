@@ -110,6 +110,12 @@ struct Function_ {
 	int intend[100];
 
 	char* funcnumstr;
+
+	/* new boolean operations */
+	List vcBools;
+	int boolStart;
+	int boolOut;
+	int boolDone;
 };
 
 typedef struct DecTableItem_ DecTableItem;

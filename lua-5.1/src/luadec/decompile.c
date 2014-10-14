@@ -1016,6 +1016,32 @@ void DeleteBoolOp(BoolOp* ptr) {
 	free(ptr);
 }
 
+void VcBools_Add(Function* F, int pc) {
+	Instruction* code = F->f->code;
+	Instruction i = F->f->code[pc];
+	OpCode o = GET_OPCODE(i);
+	int a = GETARG_A(i);
+	int b = GETARG_B(i);
+	int c = GETARG_C(i);
+	int bc = GETARG_Bx(i);
+	int sbc = GETARG_sBx(i);
+	int dest = pc + GETARG_sBx(code[pc+1]) + 1;
+	if (o==OP_EQ || o==OP_LT || o==OP_LE) {
+		AddToList(&(F->bools), (ListItem*)MakeBoolOp(RegisterOrConstant(F, b), RegisterOrConstant(F, c), o, a, pc, dest));
+	} else if (o==OP_TEST) {
+		AddToList(&(F->bools), (ListItem*)MakeBoolOp(luadec_strdup(GetR(F, a)), NULL, o, c, pc, dest));
+	} else if (o==OP_TESTSET) {
+		AddToList(&(F->bools), (ListItem*)MakeBoolOp(luadec_strdup(GetR(F, b)), luadec_strdup(GetR(F, a)), o, c, pc, dest));
+	} else {
+		return;
+	}
+	if (F->boolOut == GetJmpAddr(F, pc+2)) {
+		F->boolDone = 1;
+	} else {
+		//TODO
+	}
+}
+
 /*
 ** -------------------------------------------------------------------------
 */
@@ -1045,6 +1071,11 @@ Function* NewFunction(const Proto* f) {
 	self->intspos = 0;
 
 	self->funcnumstr = NULL;
+
+	InitList(&(self->vcBools));
+	self->boolStart = -1;
+	self->boolOut = -1;
+	self->boolDone = 0;
 	return self;
 }
 
